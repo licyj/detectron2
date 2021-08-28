@@ -18,8 +18,8 @@ Usage:
         python apply_mask.py {path/to/base_frame_folder} {path/to/base_mask_folder} \
                              {path/to/base_output_video_folder}
 '''
-MASK_BASE_FOLDER = os.path.join('/home/Datasets/mask','model_final_TSL_754_ASL_test-1000_0827')
-VIDEO_PATH = os.path.join('/home/Datasets/result','vis_video')
+MASK_BASE_FOLDER = os.path.join('/home/Datasets/mask','model_final_TSL_754_0827')
+VIDEO_PATH = os.path.join('/home/Datasets/result','vis_video_0827')
 FRAME_PATH = os.path.join('/home/Datasets','all_videos_frame')
 
 def process_run(data):
@@ -53,15 +53,15 @@ def worker_init():
 def main():
     processes = os.cpu_count()
     # label_order = ['all', 'head', 'right_hand', 'left_hand', 'others']
+    if not os.path.exists(VIDEO_PATH):
+        os.makedirs(VIDEO_PATH)
     for dt in os.listdir(MASK_BASE_FOLDER):
         mask_folder = os.path.join(MASK_BASE_FOLDER, dt)
         video_folder = os.path.join(VIDEO_PATH, dt)
         frame_folder = os.path.join(FRAME_PATH, dt)
-        if not os.path.exists(video_folder):
-            os.makedirs(video_folder)
 
         mask_folders = os.listdir(mask_folder)
-        print(video_folder)
+        # print(video_folder)
         # with tqdm(total=len(mask_folders)) as pbar:
         with tqdm(total=len(MASK_BASE_FOLDER)) as pbar:
             with multiprocessing.Pool(processes, worker_init) as pool:
