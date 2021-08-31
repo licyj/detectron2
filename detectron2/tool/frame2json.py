@@ -1,8 +1,10 @@
+from detectron2.detectron2.model_zoo.model_zoo import get
 import os, sys
 import json, cv2, time
 import multiprocessing
 from tqdm import tqdm
 from signal import *
+import argparse
 '''
 Program:
           This program write image information into json file.
@@ -13,14 +15,8 @@ Usage:
           python frame2json.py {path/to/base_frame_folder} {path/to/bese_output_json_folder}
 '''
 
-FRAME_FOLDDER = os.path.join('/home/Datasets/','all_videos_frame')
-TARGET_JSON_FOLDER = os.path.join('/home/Datasets/','all_videos_json') 
-if not os.path.exists(TARGET_JSON_FOLDER):
-    os.mkdir(TARGET_JSON_FOLDER)
-
-def arg_parse():
-    pass
-
+# FRAME_FOLDDER = os.path.join('/home/Datasets/','ASL/train/0829valid_video/spreadthesign')
+# TARGET_JSON_FOLDER = os.path.join('/home/Datasets/','ASL/train/0829valid_video/json/spreadthesign') 
 def process_run(data):
     frame_folder, dst_path = data
     for f in os.listdir(frame_folder):
@@ -48,14 +44,31 @@ def worker_init():
         sys.exit(0)
     signal(SIGINT, sig_int)
 
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("TASK",
+                        type=str,
+                        help="task name")
+    parser.add_argument("FRAME_FOLDDER",
+                        type=str,
+                        help="train jsonfile_path")    
+    parser.add_argument("TARGET_JSON_FOLDER",
+                        type=str,
+                        help="train img_path")
+    args = parser.parse_args()
+    return args
+
 def main():
+    args = get_args()
     processes = os.cpu_count()
-    for dt in os.listdir(FRAME_FOLDDER):
-        frame_folder = os.path.join(FRAME_FOLDDER, dt)
-        json_folder = os.path.join(TARGET_JSON_FOLDER, dt)
+    if not os.path.exists(args.TARGET_JSON_FOLDER):
+        os.mkdir(args.TARGET_JSON_FOLDER)
+    for dt in os.listdir(args.FRAME_FOLDDER):
+        frame_folder = os.path.join(args.FRAME_FOLDDER, dt)
+        json_folder = os.path.join(args.TARGET_JSON_FOLDER, dt)
         if not os.path.exists(json_folder):
             os.mkdir(json_folder)
-        with tqdm(total=len(FRAME_FOLDDER)) as pbar:
+        with tqdm(total=len(args.FRAME_FOLDDER)) as pbar:
             with multiprocessing.Pool(processes, worker_init) as pool:
                 frames_folder, dst_path = [], []
                 frames_folder.append(os.path.join(frame_folder))

@@ -18,9 +18,9 @@ Usage:
         python apply_mask.py {path/to/base_frame_folder} {path/to/base_mask_folder} \
                              {path/to/base_output_video_folder}
 '''
-MASK_BASE_FOLDER = os.path.join('/home/Datasets/mask','model_final_TSL_754_0827')
-VIDEO_PATH = os.path.join('/home/Datasets/result','vis_video_0827')
-FRAME_PATH = os.path.join('/home/Datasets','all_videos_frame')
+MASK_BASE_FOLDER = os.path.join('/home/Datasets/mask','0831valid_video')
+VIDEO_PATH = os.path.join('/home/Datasets/result','vis_video_0831')
+FRAME_PATH = os.path.join('/home/Datasets','ASL/train/0829valid_video/spreadthesign')
 
 def process_run(data):
     mask_folder, frame_folder, dst_path = data
@@ -75,4 +75,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
