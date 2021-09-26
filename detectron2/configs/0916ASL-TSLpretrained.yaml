@@ -1,0 +1,30 @@
+_BASE_: "/home/detectron2/configs/Base-RCNN-FPN.yaml"
+#configs setting:
+#https://blog.csdn.net/lanmengyiyu/article/details/82845366
+
+MODEL:
+  MASK_ON: True
+  RESNETS:
+    DEPTH: 50
+  ROI_HEADS:
+    NUM_CLASSES: 3
+    BATCH_SIZE_PER_IMAGE : 128
+    SCORE_THRESH_TEST: 0.8
+  # PIXEL_MEAN:
+  # PIXEL_STD:
+
+  
+SOLVER:
+  IMS_PER_BATCH: 16
+  BASE_LR: 0.0001
+  WEIGHT_DECAY: 0.0001
+  STEPS: (1000, 2000)
+  GAMMA: 0.1
+  MAX_ITER: 3000
+  CHECKPOINT_PERIOD: 500
+
+TEST:
+  EVAL_PERIOD: 1000
+
+DATALOADER:
+  NUM_WORKERS: 0

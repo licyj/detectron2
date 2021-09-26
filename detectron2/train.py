@@ -72,7 +72,7 @@ def cfg_setting(args, cfg):
     cfg.SOLVER.IMS_PER_BATCH = 4
     cfg.SOLVER.BASE_LR = 0.00025
     # https://stackoverflow.com/questions/63578040/how-many-images-per-iteration-in-detectron2
-    cfg.SOLVER.MAX_ITER = 10000 # train longer 
+    cfg.SOLVER.MAX_ITER = 20000 # train longer 
     # cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
     # pre-trained model usage
     # cfg.merge_from_file('output/model_final_TSL_754.pth')

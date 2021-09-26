@@ -1,0 +1,41 @@
+_BASE_: "/home/detectron2/configs/Base-RCNN-FPN.yaml"
+#configs setting:
+#https://blog.csdn.net/lanmengyiyu/article/details/82845366
+
+MODEL:
+  # WEIGHTS: "output/model_final_TSL_754.pth"
+  MASK_ON: True
+  RESNETS:
+    DEPTH: 50
+  ROI_HEADS:
+    NUM_CLASSES: 3
+    BATCH_SIZE_PER_IMAGE : 128
+    SCORE_THRESH_TEST: 0.7
+  # SEM_SEG_HEAD:
+  #   NUM_CLASSES: 3
+  # PIXEL_MEAN:
+  # PIXEL_STD:
+  # META_ARCHITECTURE: SemanticSegmentor
+
+# INPUT:
+#   MASK_FORMAT: bitmask
+  
+SOLVER:
+  IMS_PER_BATCH: 16
+  BASE_LR: 0.0001
+  WEIGHT_DECAY: 0.0001
+  STEPS: (3000, 7000)
+  GAMMA: 0.1
+  MAX_ITER: 1000
+  CHECKPOINT_PERIOD: 1000
+
+DATASETS:
+  TRAIN: ('0915ASL_men',)
+  TEST: ('val_0912spreadthesign_men',)
+
+TEST:
+  EVAL_PERIOD: 500
+
+DATALOADER:
+  FILTER_EMPTY_ANNOTATIONS: False
+  NUM_WORKERS: 0

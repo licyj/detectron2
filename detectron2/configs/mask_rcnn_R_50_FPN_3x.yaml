@@ -1,0 +1,35 @@
+_BASE_: "/home/detectron2/configs/Base-RCNN-FPN.yaml"
+MODEL:
+  #TODO: load with pre-trained model
+  WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+  MASK_ON: True
+  RESNETS:
+    DEPTH: 50
+  ROI_HEADS:
+    NUM_CLASSES: 3
+    BATCH_SIZE_PER_IMAGE : 128
+    SCORE_THRESH_TEST: 0.5
+  # SEM_SEG_HEAD:
+  #   NUM_CLASSES: 3
+
+SOLVER:
+  IMS_PER_BATCH: 8
+  BASE_LR: 0.001
+  MAX_ITER: 10000
+  STEPS: (3000, 7000)
+  # CHECKPOINT_PERIOD: 5000 
+
+DATASETS:
+  #TODO: change with TASK
+  TRAIN: ("0902segmentgood",)
+  TEST: ("0902segmentgood",)
+
+#TODO: validation set setting 
+#https://ortegatron.medium.com/training-on-detectron2-with-a-validation-set-and-plot-loss-on-it-to-avoid-overfitting-6449418fbf4e
+TEST:
+  EVAL_PERIOD: 100
+
+DATALOADER:
+  FILTER_EMPTY_ANNOTATIONS: False
+  NUM_WORKERS: 0
+#TODO: change with runs/ directory

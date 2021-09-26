@@ -5,6 +5,7 @@ import time
 import json
 from posixpath import dirname
 import numpy as np
+import multiprocessing as mp
 import argparse
 from time import gmtime, strftime
 import matplotlib  as plt
@@ -21,13 +22,10 @@ from detectron2.utils.visualizer import ColorMode
 '''
 Program:
         This program is for visualize inference result on frames
-        Output videos finally
 History:
         2021/08/27 Eric Chen First release
         2021/08/29 Eric Chen 'change to function call'
         2021/08/31 Eric Cjen 'adjust code structure to argparse'
-Usage:
-        python inference.py
 '''
 ### need change ###
 # TASK = '0831valid_video'
@@ -75,20 +73,26 @@ def get_test_dicts(directory):
             dataset_dicts.append(record)
     return dataset_dicts
 
+
 def dataset_register(args):
     #https://detectron2.readthedocs.io/en/latest/tutorials/datasets.html#register-a-dataset
     DatasetCatalog.register(args.TASK, get_test_dicts)
     train_meta = MetadataCatalog.get(args.TASK)
-
     return train_meta
+
 
 def cfg_setting(args, cfg):
     cfg.MODEL.WEIGHTS = os.path.join(args.model)
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.8
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 3
+    cfg.DATALOADER.NUM_WORKERS = 8
+    #TODO: change with my config
+    cfg.merge_from_file("../configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
+    cfg.MODEL.WEIGHTS='runs/0916TSL-FBpretrained/model_final.pth'
     cfg.DATASETS.TEST = (args.TASK, )
     #https://github.com/facebookresearch/detectron2/issues/80#issuecomment-544228514
     cfg.DATALOADER.FILTER_EMPTY_ANNOTATIONS=False
+    return cfg
 
 def get_mask(predictor, d, train_meta, mask_folder):
     img = cv2.imread(d["file_name"])
@@ -115,32 +119,36 @@ def get_mask(predictor, d, train_meta, mask_folder):
     mask_path = os.path.join(video_folder, d["file_name"].split('/')[-1].replace('jpg','png'))
     cv2.imwrite(mask_path, output)
 
+
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("TASK",
                         type=str,
                         help="task name")
-    parser.add_argument("CUSTOM_TEST_JSON_PATH",
-                        type=str,
-                        help="json files within testset")
     parser.add_argument("model",
                         type=str,
                         help="model name")
+    parser.add_argument("CUSTOM_TEST_JSON_PATH",
+                        type=str,
+                        help="json files within testset")
     args = parser.parse_args()
     return args
 
+
 def main():
+    mp.set_start_method("spawn", force=True)
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
     args = get_args()
     cfg = get_cfg()
-    cfg.merge_from_file("../configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
     cfg_setting(args, cfg)
     train_meta = dataset_register(args= args)
     predictor = DefaultPredictor(cfg)
-    test_set_dicts = get_test_dicts(args.CUSTOM_TEST_JSON_PATH)
-    OUTPUT_MASK_PATH = os.path.join('/home/Datasets/mask/', args.TASK)
-    for d in test_set_dicts:    
-        if not os.path.exists(OUTPUT_MASK_PATH):
-            os.makedirs(OUTPUT_MASK_PATH)
+    dataset_dict = get_test_dicts(args.CUSTOM_TEST_JSON_PATH)
+    OUTPUT_MASK_PATH = os.path.join('/home/Datasets/mask/0916ASL-TSLpretrained')
+    if not os.path.exists(OUTPUT_MASK_PATH):
+        os.makedirs(OUTPUT_MASK_PATH)
+    for d in dataset_dict:
         get_mask(predictor, d, train_meta, mask_folder=OUTPUT_MASK_PATH)
 
 if __name__ == '__main__':

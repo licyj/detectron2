@@ -12,113 +12,15 @@ Therefore, we recommend you to use detectron2 as an library and take
 this file as an example of how to use the library.
 You may want to write your own script with your datasets and other customizations.
 """
-
-import logging
+from detectron2.data.catalog import MetadataCatalog
 import os
-from collections import OrderedDict
-import torch
-
 import detectron2.utils.comm as comm
 from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.config import get_cfg
-from detectron2.data import MetadataCatalog
 from detectron2.data.datasets import register_coco_instances
-from detectron2.data import DatasetMapper
-from detectron2.engine import DefaultTrainer, default_argument_parser, default_setup, hooks, launch
-from detectron2.evaluation import (
-    CityscapesInstanceEvaluator,
-    CityscapesSemSegEvaluator,
-    COCOEvaluator,
-    COCOPanopticEvaluator,
-    DatasetEvaluators,
-    LVISEvaluator,
-    PascalVOCDetectionEvaluator,
-    SemSegEvaluator,
-    verify_results,
-)
-from detectron2.modeling import GeneralizedRCNNWithTTA
-from detectron2.data import transforms as T 
-
-def build_evaluator(cfg, dataset_name, output_folder=None):
-    """
-    Create evaluator(s) for a given dataset.
-    This uses the special metadata "evaluator_type" associated with each builtin dataset.
-    For your own dataset, you can simply create an evaluator manually in your
-    script and do not have to worry about the hacky if-else logic here.
-    """
-    if output_folder is None:
-        output_folder = os.path.join(cfg.OUTPUT_DIR, "inference")
-    evaluator_list = []
-    evaluator_type = MetadataCatalog.get(dataset_name).evaluator_type
-    if evaluator_type in ["sem_seg", "coco_panoptic_seg"]:
-        evaluator_list.append(
-            SemSegEvaluator(
-                dataset_name,
-                distributed=True,
-                output_dir=output_folder,
-            )
-        )
-    if evaluator_type in ["coco", "coco_panoptic_seg"]:
-        evaluator_list.append(COCOEvaluator(dataset_name, output_dir=output_folder))
-    if evaluator_type == "coco_panoptic_seg":
-        evaluator_list.append(COCOPanopticEvaluator(dataset_name, output_folder))
-    if evaluator_type == "cityscapes_instance":
-        assert (
-            torch.cuda.device_count() > comm.get_rank()
-        ), "CityscapesEvaluator currently do not work with multiple machines."
-        return CityscapesInstanceEvaluator(dataset_name)
-    if evaluator_type == "cityscapes_sem_seg":
-        assert (
-            torch.cuda.device_count() > comm.get_rank()
-        ), "CityscapesEvaluator currently do not work with multiple machines."
-        return CityscapesSemSegEvaluator(dataset_name)
-    elif evaluator_type == "pascal_voc":
-        return PascalVOCDetectionEvaluator(dataset_name)
-    elif evaluator_type == "lvis":
-        return LVISEvaluator(dataset_name, output_dir=output_folder)
-    if len(evaluator_list) == 0:
-        raise NotImplementedError(
-            "no Evaluator for the dataset {} with the type {}".format(dataset_name, evaluator_type)
-        )
-    elif len(evaluator_list) == 1:
-        return evaluator_list[0]
-    return DatasetEvaluators(evaluator_list)
-
-
-class Trainer(DefaultTrainer):
-    """
-    We use the "DefaultTrainer" which contains pre-defined default logic for
-    standard training workflow. They may not work for you, especially if you
-    are working on a new research project. In that case you can write your
-    own training loop. You can use "tools/plain_train_net.py" as an example.
-    """
-
-    @classmethod
-    def build_evaluator(cls, cfg, dataset_name, output_folder=None):
-        return build_evaluator(cfg, dataset_name, output_folder)
-    
-    @classmethod
-    def build_train_loader(cls, cfg):
-        
-        return super().build_train_loader(cfg)
-    
-    @classmethod
-    def test_with_TTA(cls, cfg, model):
-        logger = logging.getLogger("detectron2.trainer")
-        # In the end of training, run an evaluation with TTA
-        # Only support some R-CNN models.
-        logger.info("Running inference with test-time augmentation ...")
-        model = GeneralizedRCNNWithTTA(cfg, model)
-        evaluators = [
-            cls.build_evaluator(
-                cfg, name, output_folder=os.path.join(cfg.OUTPUT_DIR, "inference_TTA")
-            )
-            for name in cfg.DATASETS.TEST
-        ]
-        res = cls.test(cfg, model, evaluators)
-        res = OrderedDict({k + "_TTA": v for k, v in res.items()})
-        return res
-
+from detectron2.engine import default_argument_parser, default_setup, hooks, launch
+from detectron2.evaluation import verify_results
+from Trainer import Trainer
 
 def setup(args):
     """
@@ -131,14 +33,40 @@ def setup(args):
     default_setup(cfg, args)
     return cfg
 
-def dataset_register():
-    register_coco_instances('0902segmentgood', {}, \
-                        '/home/Datasets/ASL/train/0902segmentgood/train_0902segmentgood.json',\
-                        '/home/Datasets/ASL/train/0902segmentgood/spreadthesign/')
-#          
-def main(args):
-    cfg = setup(args)
 
+def dataset_register(cfg):
+    """
+        error may occur:
+            dataset is not registered
+            https://github.com/facebookresearch/detectron2/issues/253#issuecomment-550398640
+    """
+    for train_set in cfg.DATASETS.TRAIN:
+        if train_set is 'TSL':
+            register_coco_instances(train_set, {}, \
+                '/home/Datasets/TSL/train/train.json',\
+                '/home/Datasets/TSL/train/frames/')    
+            MetadataCatalog.get(train_set)
+        else:
+            register_coco_instances(train_set, {}, \
+                '/home/Datasets/ASL/train/{}/train_{}.json'.format(train_set, train_set),\
+                '/home/Datasets/ASL/train/{}/frame/'.format(train_set))    
+            MetadataCatalog.get(train_set)
+
+
+
+
+    for val_set in cfg.DATASETS.TEST:
+        register_coco_instances(val_set, {}, \
+            '/home/Datasets/ASL/train/{}/val_{}.json'.format(val_set,val_set),\
+            '/home/Datasets/ASL/train/{}/val/'.format(val_set))    
+        MetadataCatalog.get(val_set)
+
+
+def main(args):
+    os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+    cfg = setup(args)
+    dataset_register(cfg)
     if args.eval_only:
         model = Trainer.build_model(cfg)
         DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
@@ -151,11 +79,6 @@ def main(args):
             verify_results(cfg, res)
         return res
 
-    """
-    If you'd like to do anything fancier than the standard training logic,
-    consider writing your own training loop (see plain_train_net.py) or
-    subclassing the trainer.
-    """
     trainer = Trainer(cfg)
     trainer.resume_or_load(resume=args.resume)
     if cfg.TEST.AUG.ENABLED:
@@ -168,7 +91,7 @@ def main(args):
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
     print("Command Line Args:", args)
-    dataset_register()
+
     launch(
         main,
         args.num_gpus,
