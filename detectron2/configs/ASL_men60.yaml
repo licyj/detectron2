@@ -4,13 +4,16 @@ _BASE_: "/home/detectron2/configs/Base-RCNN-FPN.yaml"
 
 MODEL:
   # WEIGHTS: "output/model_final_TSL_754.pth"
+  WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
   MASK_ON: True
   RESNETS:
     DEPTH: 50
   ROI_HEADS:
     NUM_CLASSES: 3
     BATCH_SIZE_PER_IMAGE : 128
-    SCORE_THRESH_TEST: 0.5
+    # SCORE_THRESH_TEST: 0.7
+  DEVICE:
+    'cuda:0,1'
   # SEM_SEG_HEAD:
   #   NUM_CLASSES: 3
   # PIXEL_MEAN:
@@ -19,23 +22,26 @@ MODEL:
 
 # INPUT:
 #   MASK_FORMAT: bitmask
-  
+
 SOLVER:
-  IMS_PER_BATCH: 8
+  IMS_PER_BATCH: 16
   BASE_LR: 0.0001
   WEIGHT_DECAY: 0.0001
-  STEPS: (3000, 7000)
+  STEPS: (500, 2500)
   GAMMA: 0.1
-  MAX_ITER: 10000
-  CHECKPOINT_PERIOD: 1000
+  MAX_ITER: 5000
+  CHECKPOINT_PERIOD: 500
 
 DATASETS:
   TRAIN: ('0915ASL_men',)
-  TEST: ('val_0912spreadthesign_men',)
+  TEST: ('0901spreadthesign_men',)
 
 TEST:
-  EVAL_PERIOD: 2000
+  EVAL_PERIOD: 500
 
 DATALOADER:
   FILTER_EMPTY_ANNOTATIONS: False
   NUM_WORKERS: 0
+
+# OUTPUT_DIR:
+#   "runs/1004ASL_men60/"

@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 import argparse
 import pandas as pd
-from pandas.core.accessor import DirNamesMixin
 '''
     function:
         output label file: video_id  video_label
@@ -39,6 +38,8 @@ def get_id_label_pair(dataset_info, transform_table):
         input:
             dataset_info:    <data_frame>   ASL information in csv
             transform_table: <dict>         ori_id, video_id
+        output:
+            labels:          <dict>         current_id, gloss 
     '''
     labels = {}
     for ori_id in sorted(transform_table.keys()):

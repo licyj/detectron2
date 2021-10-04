@@ -49,7 +49,7 @@ def dataset_register(cfg):
         else:
             register_coco_instances(train_set, {}, \
                 '/home/Datasets/ASL/train/{}/train_{}.json'.format(train_set, train_set),\
-                '/home/Datasets/ASL/train/{}/frame/'.format(train_set))    
+                '/home/Datasets/ASL/train/{}/frame/'.format(train_set))
             MetadataCatalog.get(train_set)
 
 
@@ -58,7 +58,7 @@ def dataset_register(cfg):
     for val_set in cfg.DATASETS.TEST:
         register_coco_instances(val_set, {}, \
             '/home/Datasets/ASL/train/{}/val_{}.json'.format(val_set,val_set),\
-            '/home/Datasets/ASL/train/{}/val/'.format(val_set))    
+            '/home/Datasets/ASL/train/{}/val/'.format(val_set))
         MetadataCatalog.get(val_set)
 
 

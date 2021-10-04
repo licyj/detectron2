@@ -1,6 +1,5 @@
 _BASE_: "/home/detectron2/configs/Base-RCNN-FPN.yaml"
 MODEL:
-  #TODO: load with pre-trained model
   WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
   MASK_ON: True
   RESNETS:
@@ -9,8 +8,7 @@ MODEL:
     NUM_CLASSES: 3
     BATCH_SIZE_PER_IMAGE : 128
     SCORE_THRESH_TEST: 0.5
-  # SEM_SEG_HEAD:
-  #   NUM_CLASSES: 3
+
 
 SOLVER:
   IMS_PER_BATCH: 8

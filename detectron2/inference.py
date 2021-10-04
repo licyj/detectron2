@@ -40,6 +40,7 @@ def get_test_dicts(directory):
     '''
     classes = ['head', 'right_hand', 'left_hand']
     dataset_dicts = []
+    print(directory)
     for video in os.listdir(directory):
         for jsonfile in os.listdir(directory+'/'+video):
             JSONFILE = os.path.join(directory,video,jsonfile)
@@ -86,9 +87,9 @@ def cfg_setting(args, cfg):
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.8
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 3
     cfg.DATALOADER.NUM_WORKERS = 8
-    #TODO: change with my config
-    cfg.merge_from_file("../configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
-    cfg.MODEL.WEIGHTS='runs/0916TSL-FBpretrained/model_final.pth'
+    # cfg.merge_from_file("../configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
+    cfg.merge_from_file("configs/ASL_men60.yaml")
+    cfg.MODEL.WEIGHTS='/home/detectron2/detectron2/runs/1004ASL_men60/model_final.pth'
     cfg.DATASETS.TEST = (args.TASK, )
     #https://github.com/facebookresearch/detectron2/issues/80#issuecomment-544228514
     cfg.DATALOADER.FILTER_EMPTY_ANNOTATIONS=False
@@ -145,7 +146,7 @@ def main():
     train_meta = dataset_register(args= args)
     predictor = DefaultPredictor(cfg)
     dataset_dict = get_test_dicts(args.CUSTOM_TEST_JSON_PATH)
-    OUTPUT_MASK_PATH = os.path.join('/home/Datasets/mask/0916ASL-TSLpretrained')
+    OUTPUT_MASK_PATH = os.path.join('/home/Datasets/mask/1004ASL_men60')
     if not os.path.exists(OUTPUT_MASK_PATH):
         os.makedirs(OUTPUT_MASK_PATH)
     for d in dataset_dict:

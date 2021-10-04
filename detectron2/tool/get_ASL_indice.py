@@ -4,11 +4,14 @@ from pathlib import Path
 import argparse
 import json
 
-
 def get_indice(args):
     '''
         funciton:
             return indice: <dict>
+        input:
+            root/of/label_json <Path>
+        output:
+            indice dictionary: current_video, start_frame, end_frame
     '''
     indice_dict={}
     for video in sorted(os.listdir(args.label_json)):
@@ -23,7 +26,6 @@ def get_indice(args):
             if len(f['labels'])>1 and not started:
                 started = True
                 start_frame = int(file.split('__')[0])
-                
                 indice_dict[video].append(start_frame)
             if len(f['labels'])==1 and started and not ended:
                 ended = True

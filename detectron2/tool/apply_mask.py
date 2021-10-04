@@ -1,3 +1,4 @@
+import argparse
 import yaml
 import os
 import sys
@@ -50,20 +51,30 @@ def worker_init():
     signal(SIGINT, sig_int)
 
 
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('frame', type=str, help='path/to/base/frame')
+    parser.add_argument('mask', type=str, help='path/to/base/mask')
+    parser.add_argument('video_out', type=str, help='path/to/output/video')
+    args = parser.parse_args()
+    return args
+
+
 def main():
+    args = get_args()
     processes = os.cpu_count()
     # label_order = ['all', 'head', 'right_hand', 'left_hand', 'others']
-    if not os.path.exists(VIDEO_PATH):
-        os.makedirs(VIDEO_PATH)
-    for dt in os.listdir(MASK_BASE_FOLDER):
-        mask_folder = os.path.join(MASK_BASE_FOLDER, dt)
-        video_folder = os.path.join(VIDEO_PATH, dt)
-        frame_folder = os.path.join(FRAME_PATH, dt)
+    if not os.path.exists(args.video_out):
+        os.makedirs(args.video_out)
+    for dt in os.listdir(args.mask):
+        mask_folder = os.path.join(args.mask, dt)
+        video_folder = os.path.join(args.video_out, dt)
+        frame_folder = os.path.join(args.frame, dt)
 
         mask_folders = os.listdir(mask_folder)
         # print(video_folder)
         # with tqdm(total=len(mask_folders)) as pbar:
-        with tqdm(total=len(MASK_BASE_FOLDER)) as pbar:
+        with tqdm(total=len(args.mask)) as pbar:
             with multiprocessing.Pool(processes, worker_init) as pool:
                 masks_folder, frames_folder, dst_paths = [], [], []
                 masks_folder.append(os.path.join(mask_folder))

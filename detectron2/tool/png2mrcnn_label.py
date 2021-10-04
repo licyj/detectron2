@@ -90,9 +90,9 @@ def run(args):
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("TASK",
-                        type=str,
-                        help="task name")
+    # parser.add_argument("TASK",
+    #                     type=str,
+    #                     help="task name")
     parser.add_argument("png_masks_folder",
                         type=str,
                         help="mask folder")    
