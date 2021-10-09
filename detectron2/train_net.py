@@ -13,6 +13,7 @@ this file as an example of how to use the library.
 You may want to write your own script with your datasets and other customizations.
 """
 from detectron2.data.catalog import MetadataCatalog
+from detectron2 import model_zoo
 import os
 import detectron2.utils.comm as comm
 from detectron2.checkpoint import DetectionCheckpointer
@@ -27,7 +28,22 @@ def setup(args):
     Create configs and perform basic setups.
     """
     cfg = get_cfg()
-    cfg.merge_from_file(args.config_file)
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
+    cfg.DATASETS.TRAIN = ("ASL_men189",)
+    cfg.DATASETS.TEST = ("0901spreadthesign_men",)
+
+    cfg.DATALOADER.NUM_WORKERS = 0
+    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
+    cfg.SOLVER.IMS_PER_BATCH = 16
+    cfg.SOLVER.BASE_LR = 0.00025
+    cfg.SOLVER.MAX_ITER = 3000
+    cfg.SOLVER.CHECKPOINT_PERIOD = 500
+    cfg.SOLVER.STEPS = []
+
+    cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128
+    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
+    cfg.TEST.EVAL_PERIOD = cfg.SOLVER.MAX_ITER
+    # cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()
     default_setup(cfg, args)
@@ -52,9 +68,6 @@ def dataset_register(cfg):
                 '/home/Datasets/ASL/train/{}/frame/'.format(train_set))
             MetadataCatalog.get(train_set)
 
-
-
-
     for val_set in cfg.DATASETS.TEST:
         register_coco_instances(val_set, {}, \
             '/home/Datasets/ASL/train/{}/val_{}.json'.format(val_set,val_set),\
@@ -78,7 +91,7 @@ def main(args):
         if comm.is_main_process():
             verify_results(cfg, res)
         return res
-
+    os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
     trainer = Trainer(cfg)
     trainer.resume_or_load(resume=args.resume)
     if cfg.TEST.AUG.ENABLED:
@@ -91,7 +104,6 @@ def main(args):
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
     print("Command Line Args:", args)
-
     launch(
         main,
         args.num_gpus,

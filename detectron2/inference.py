@@ -1,24 +1,16 @@
+from genericpath import exists
 import os
-import random
+import pathlib
 import cv2
-import time
-import json
-from posixpath import dirname
 import numpy as np
 import multiprocessing as mp
 import argparse
-from time import gmtime, strftime
-import matplotlib  as plt
-from detectron2.engine import DefaultTrainer
 from detectron2.engine import DefaultPredictor
 from detectron2.utils.visualizer import Visualizer
 from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.config import get_cfg
 from detectron2 import model_zoo
-from detectron2.data.datasets import register_coco_instances
-from detectron2.structures import BoxMode
 from detectron2.utils.visualizer import ColorMode
-#https://blog.csdn.net/qq_48019718/article/details/118859447
 '''
 Program:
         This program is for visualize inference result on frames
@@ -27,130 +19,72 @@ History:
         2021/08/29 Eric Chen 'change to function call'
         2021/08/31 Eric Cjen 'adjust code structure to argparse'
 '''
-### need change ###
-# TASK = '0831valid_video'
-# CUSTOM_TEST_JSON_PATH = os.path.join('/home/Datasets/','ASL/train/0829valid_video/json/spreadthesign')
-###################
-
 # https://github.com/TannerGilbert/Detectron2-Train-a-Instance-Segmentation-Model#4-registering-the-data-set
-def get_test_dicts(directory):
-    '''
-        input: directory of json need to create mask
-        output: list of image entry
-    '''
-    classes = ['head', 'right_hand', 'left_hand']
-    dataset_dicts = []
-    print(directory)
-    for video in os.listdir(directory):
-        for jsonfile in os.listdir(directory+'/'+video):
-            JSONFILE = os.path.join(directory,video,jsonfile)
-            with open(JSONFILE,'r') as f:
-                img_anns = json.load(f)
-            record = {}
-            filename = img_anns["imagePath"]
-            record["file_name"] = filename
-            img = cv2.imread(filename)
-            h,w = img.shape[:2]
-            record["height"] = h
-            record["width"] = w
-            if 'shapes' in img_anns.keys():
-                annos = img_anns["shapes"]
-                objs = []
-                for anno in annos:
-                    px = [a[0] for a in anno['points']]
-                    py = [a[1] for a in anno['points']]
-                    poly = [(x, y) for x, y in zip(px, py)]
-                    poly = [p for x in poly for p in x]
-
-                    obj = {
-                        "bbox": [np.min(px), np.min(py), np.max(px), np.max(py)],
-                        "bbox_mode": BoxMode.XYXY_ABS,
-                        "segmentation": [poly],
-                        "category_id": classes.index(anno['label']),
-                        "iscrowd": 0
-                    }
-                    objs.append(obj)
-            record["annotations"] = []
-            dataset_dicts.append(record)
-    return dataset_dicts
-
 
 def dataset_register(args):
-    #https://detectron2.readthedocs.io/en/latest/tutorials/datasets.html#register-a-dataset
-    DatasetCatalog.register(args.TASK, get_test_dicts)
-    train_meta = MetadataCatalog.get(args.TASK)
-    return train_meta
+    from detectron2.data.datasets import register_coco_instances
+    register_coco_instances("train_dataset", {}, "{}".format(args.train_json), args.root_frame)
 
 
 def cfg_setting(args, cfg):
-    cfg.MODEL.WEIGHTS = os.path.join(args.model)
-    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.8
-    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 3
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
+    cfg.MODEL.WEIGHTS = args.model
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.6
+    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
     cfg.DATALOADER.NUM_WORKERS = 8
-    # cfg.merge_from_file("../configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
-    cfg.merge_from_file("configs/ASL_men60.yaml")
-    cfg.MODEL.WEIGHTS='/home/detectron2/detectron2/runs/1004ASL_men60/model_final.pth'
-    cfg.DATASETS.TEST = (args.TASK, )
     #https://github.com/facebookresearch/detectron2/issues/80#issuecomment-544228514
-    cfg.DATALOADER.FILTER_EMPTY_ANNOTATIONS=False
-    return cfg
 
-def get_mask(predictor, d, train_meta, mask_folder):
-    img = cv2.imread(d["file_name"])
+
+def get_mask(predictor, imagePath, mask_folder):
+    img = cv2.imread(imagePath)
     outputs = predictor(img)
+    # print(outputs)
     v = Visualizer(img[:, :, ::-1],
-                metadata = train_meta,
+                metadata = MetadataCatalog.get("train_dataset"),
                 scale = 1,
-                instance_mode = ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels
+                instance_mode = ColorMode.IMAGE_BW
     )
     v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
     img = v.get_image()[:, :, ::-1]
     #https://blog.csdn.net/qq_48019718/article/details/119084442
     mask_array = outputs['instances'].to("cpu").pred_masks.numpy()
-    num_instances = mask_array.shape[0]         #有几个目标
-    mask_array = np.moveaxis(mask_array, 0, -1) #移动 shape 的尺寸
+    num_instances = mask_array.shape[0]
+    mask_array = np.moveaxis(mask_array, 0, -1)
     mask_array_instance = []
     output = np.zeros_like(img)
     for i in range(num_instances):
         mask_array_instance.append(mask_array[:, :, i:(i+1)])
         output = np.where(mask_array_instance[i] == True, i+1, output)
-    video_folder = os.path.join(mask_folder, d["file_name"].split('/')[-2])
-    if not os.path.exists(video_folder):
-        os.mkdir(video_folder)
-    mask_path = os.path.join(video_folder, d["file_name"].split('/')[-1].replace('jpg','png'))
+    video_folder = os.path.join(mask_folder, imagePath.split('/')[-2])
+    pathlib.Path(video_folder).mkdir(exist_ok=True)
+    mask_path = os.path.join(video_folder, imagePath.split('/')[-1].replace('jpg','png'))
     cv2.imwrite(mask_path, output)
 
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("TASK",
-                        type=str,
-                        help="task name")
-    parser.add_argument("model",
-                        type=str,
-                        help="model name")
-    parser.add_argument("CUSTOM_TEST_JSON_PATH",
-                        type=str,
-                        help="json files within testset")
+    parser.add_argument("model", type=str, help="path/to/model")
+    parser.add_argument("root_frame", type=str, help="path/to/frame/path")
+    parser.add_argument("root_mask", type=str, help="path/to/target/mask/path")
+    parser.add_argument("train_json", type=str, help="path/to/train_json")
     args = parser.parse_args()
     return args
 
 
 def main():
-    mp.set_start_method("spawn", force=True)
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
-    args = get_args()
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    mp.set_start_method("spawn", force=True)
     cfg = get_cfg()
+    args = get_args()
     cfg_setting(args, cfg)
-    train_meta = dataset_register(args= args)
+    dataset_register(args)
     predictor = DefaultPredictor(cfg)
-    dataset_dict = get_test_dicts(args.CUSTOM_TEST_JSON_PATH)
-    OUTPUT_MASK_PATH = os.path.join('/home/Datasets/mask/1004ASL_men60')
-    if not os.path.exists(OUTPUT_MASK_PATH):
-        os.makedirs(OUTPUT_MASK_PATH)
-    for d in dataset_dict:
-        get_mask(predictor, d, train_meta, mask_folder=OUTPUT_MASK_PATH)
+    pathlib.Path(args.root_mask).mkdir(exist_ok=True)
+    for video in os.listdir(args.root_frame):
+        for image in os.listdir(os.path.join(args.root_frame, video)):
+            imagePath = os.path.join(args.root_frame, video, image)
+            get_mask(predictor, imagePath, mask_folder=args.root_mask)
 
 if __name__ == '__main__':
     main()

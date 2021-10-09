@@ -21,9 +21,9 @@ export PATH
 echo `date`"===> training start"
 cd /home/detectron2/detectron2/
 python train_net.py --num-gpus $1\
-                    --config-file $2\
-                    MODEL.WEIGHTS $3\
-                    OUTPUT_DIR $4
+                    OUTPUT_DIR $2
+                    # --config-file $2\
+                    # MODEL.WEIGHTS $3\
                     # DATASETS.TRAIN $4\
                     # DATASETS.TEST $5\
 echo `date`"===> training done."

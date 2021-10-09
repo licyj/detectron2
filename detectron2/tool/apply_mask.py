@@ -9,6 +9,7 @@ from tqdm import tqdm
 import multiprocessing
 from concurrent import futures
 from signal import *
+import pathlib
 '''
 Program:
         This program is for visualize inference result on frames
@@ -17,11 +18,8 @@ History:
         2021/08/27 Eric Chen First release
 Usage:
         python apply_mask.py {path/to/base_frame_folder} {path/to/base_mask_folder} \
-                             {path/to/base_output_video_folder}
+                            {path/to/base_output_video_folder}
 '''
-MASK_BASE_FOLDER = os.path.join('/home/Datasets/mask','0831valid_video')
-VIDEO_PATH = os.path.join('/home/Datasets/result','vis_video_0831')
-FRAME_PATH = os.path.join('/home/Datasets','ASL/train/0829valid_video/spreadthesign')
 
 def process_run(data):
     mask_folder, frame_folder, dst_path = data
@@ -66,21 +64,17 @@ def main():
     # label_order = ['all', 'head', 'right_hand', 'left_hand', 'others']
     if not os.path.exists(args.video_out):
         os.makedirs(args.video_out)
-    for dt in os.listdir(args.mask):
-        mask_folder = os.path.join(args.mask, dt)
-        video_folder = os.path.join(args.video_out, dt)
-        frame_folder = os.path.join(args.frame, dt)
-
-        mask_folders = os.listdir(mask_folder)
-        # print(video_folder)
-        # with tqdm(total=len(mask_folders)) as pbar:
-        with tqdm(total=len(args.mask)) as pbar:
+    mask_folders = os.listdir(args.mask)
+    with tqdm(total=len(mask_folders), position=0, leave=True) as pbar:
+        for dt in os.listdir(args.mask):
+            mask_folder = os.path.join(args.mask, dt)
+            video_folder = os.path.join(args.video_out, dt)
+            frame_folder = os.path.join(args.frame, dt)
             with multiprocessing.Pool(processes, worker_init) as pool:
                 masks_folder, frames_folder, dst_paths = [], [], []
                 masks_folder.append(os.path.join(mask_folder))
                 frames_folder.append(os.path.join(frame_folder))
                 dst_paths.append(os.path.join(video_folder) + '.avi')
-                # dst_paths.append(os.path.join(video_folder, name.replace('jpg','avi')) )
                 for i in (pool.imap_unordered(process_run, zip(masks_folder, frames_folder, dst_paths))):
                     pbar.update()
 

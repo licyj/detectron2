@@ -26,11 +26,11 @@ def run(args):
 	png_folders = sorted([os.path.join(png_masks_folder, folder) for folder in os.listdir(png_masks_folder)])
 	for png_folder in png_folders:
 		folder = os.path.join(Path(png_folder).stem)
-		print('folder',folder,'\t')
 		for p in sorted(os.listdir(png_folder)):
 			png_path = os.path.join(png_folder, p)
 			file_name = str(os.path.join(folder, Path(p).stem+'.jpg')).replace('\\','/')
 			print('\r'+' '*60+'\r'+file_name, end='')
+
 			mask = cv2.imread(png_path, 0)
 			height, width = mask.shape[:2]
 			images.append({
@@ -54,10 +54,13 @@ def run(args):
 
 				contours, hierarchy = cv2.findContours(mask_, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 				for cnt in contours:
+					area += cv2.contourArea(cnt)
+					if area < 100.0:
+						continue
 					segmentation = []
 					segmentation.extend([float(pt) for pt in cnt.flatten()])
-					area += cv2.contourArea(cnt)
-					segmentations.append(segmentation)
+					segmentations.extend(segmentation)
+					# segmentations.append(segmentation)
 				area = float(area)
 
 				bbox = [int(min(xs)), int(min(ys)), int(max(xs)-min(xs)), int(max(ys)-min(ys))]
@@ -84,27 +87,19 @@ def run(args):
 			'images': images,
 			'categories': categories,
 			'annotations': annotations
-		}, json_file)
+		}, json_file,indent=4)
 
 	print('\n{} done.'.format(args.json_file_name))
 
 def get_args():
     parser = argparse.ArgumentParser()
-    # parser.add_argument("TASK",
-    #                     type=str,
-    #                     help="task name")
-    parser.add_argument("png_masks_folder",
-                        type=str,
-                        help="mask folder")    
-    parser.add_argument("json_file_name",
-                        type=str,
-                        help="model name")
+    parser.add_argument("png_masks_folder", type=str, help="path/to/mask/folder")    
+    parser.add_argument("json_file_name", type=str, help="path/to/train_json")
     args = parser.parse_args()
     return args
 
 def main():
-	args = get_args()
-	run(args)
+	run(get_args())
 
 if __name__ == '__main__':
 	main()
