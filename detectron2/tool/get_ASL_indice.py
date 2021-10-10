@@ -41,7 +41,7 @@ def dict2indice_txt(args,indice):
     '''
     if not os.path.exists('/home/Datasets/ASL/To_111/{}'.format(str(args.label_json).split('/')[-2])):
         os.mkdir('/home/Datasets/ASL/To_111/{}'.format(str(args.label_json).split('/')[-2]))
-    outPath = os.path.join('/home/Datasets/ASL/To_111/{}'.format(str(args.label_json).split('/')[-2]),'label.txt')
+    outPath = os.path.join('/home/Datasets/ASL/To_111/{}'.format(str(args.label_json).split('/')[-2]),'indices.txt')
     with open(outPath, 'w') as f:
         for video in sorted(indice.keys()):
             f.write(video +'\t'+ str(indice[video][0]) +'\t'+ str(indice[video][1]) + '\n')

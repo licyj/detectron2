@@ -186,19 +186,19 @@ def run(data):
 def get_args():
     parser= argparse.ArgumentParser()
     parser.add_argument('mask_root', type=str, help='path/to/mask_root')
+    parser.add_argument('label_root', type=str, help='path/to/label_root')
     args = parser.parse_args()
     return args
 
 def main():
     args = get_args()
     png_mask_folder = args.mask_root
-    json_contour_folder = os.path.join('TSL', 'mask', 'json_contour', 'train')
+    label_root =args.label_root
     label_classes = ['head', 'right_hand', 'left_hand', 'others']
 
-    vids = ['012', '016', '018', '022', '023', '688', '749']
-    for v in vids:
+    for v in os.listdir(png_mask_folder):
         png_mask_dir = os.path.join(png_mask_folder, v)
-        json_mask_dir = os.path.join(json_contour_folder, v)
+        json_mask_dir = os.path.join(label_root, v)
         pathlib.Path(json_mask_dir).mkdir(exist_ok=True)
 
         for path in sorted(os.listdir(png_mask_dir)):

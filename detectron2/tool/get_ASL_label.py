@@ -59,7 +59,7 @@ def dump2txt(outPath, id_label_pair):
 
 def main():
     args = get_args()
-    outPath = os.path.join('/home/Datasets/ASL/To_111/', str(args.transformFile).split("/")[-2], 'test_label.txt')
+    outPath = os.path.join('/home/Datasets/ASL/To_111/', str(args.transformFile).split("/")[-2], 'label.txt')
     dataset_info = pd.read_csv(open('/home/Datasets/ASL_information.csv', 'r'))
     dataset_info = dataset_info[['video_id','gloss']]
     # transformation info
