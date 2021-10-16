@@ -23,27 +23,24 @@ from detectron2.engine import default_argument_parser, default_setup, hooks, lau
 from detectron2.evaluation import verify_results
 from Trainer import Trainer
 
-def setup(args):
+def setup_cfg(args):
     """
     Create configs and perform basic setups.
     """
     cfg = get_cfg()
+    # Load default config
     cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-    cfg.DATASETS.TRAIN = ("ASL_men189",)
-    cfg.DATASETS.TEST = ("0901spreadthesign_men",)
+    
+    # Add dataset root and dataset name key
+    cfg.DATASETS.ROOT = cfg.DATASETS.NAME = None
 
-    cfg.DATALOADER.NUM_WORKERS = 0
-    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")  # Let training initialize from model zoo
-    cfg.SOLVER.IMS_PER_BATCH = 16
-    cfg.SOLVER.BASE_LR = 0.00025
-    cfg.SOLVER.MAX_ITER = 3000
-    cfg.SOLVER.CHECKPOINT_PERIOD = 500
-    cfg.SOLVER.STEPS = []
+    # Load custom config
+    cfg.merge_from_file(args.config_file)
 
+    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
     cfg.TEST.EVAL_PERIOD = cfg.SOLVER.MAX_ITER
-    # cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()
     default_setup(cfg, args)
@@ -56,29 +53,21 @@ def dataset_register(cfg):
             dataset is not registered
             https://github.com/facebookresearch/detectron2/issues/253#issuecomment-550398640
     """
-    for train_set in cfg.DATASETS.TRAIN:
-        if train_set is 'TSL':
-            register_coco_instances(train_set, {}, \
-                '/home/Datasets/TSL/train/train.json',\
-                '/home/Datasets/TSL/train/frames/')    
-            MetadataCatalog.get(train_set)
-        else:
-            register_coco_instances(train_set, {}, \
-                '/home/Datasets/ASL/train/{}/train_{}.json'.format(train_set, train_set),\
-                '/home/Datasets/ASL/train/{}/frame/'.format(train_set))
-            MetadataCatalog.get(train_set)
-
-    for val_set in cfg.DATASETS.TEST:
-        register_coco_instances(val_set, {}, \
-            '/home/Datasets/ASL/train/{}/val_{}.json'.format(val_set,val_set),\
-            '/home/Datasets/ASL/train/{}/val/'.format(val_set))
-        MetadataCatalog.get(val_set)
+    for dataset_type, datasets in zip(['train', 'val'], [cfg.DATASETS.TRAIN, cfg.DATASETS.TEST]):
+        for dataset in datasets:
+            register_coco_instances(
+                dataset,
+                {},
+                f'{cfg.DATASETS.ROOT}/{cfg.DATASETS.NAME}/{dataset_type}_{cfg.DATASETS.NAME}.json',
+                f'{cfg.DATASETS.ROOT}/{cfg.DATASETS.NAME}/{dataset_type}/img'
+            )
 
 
 def main(args):
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
-    cfg = setup(args)
+    print(args)
+    cfg = setup_cfg(args)
     dataset_register(cfg)
     if args.eval_only:
         model = Trainer.build_model(cfg)

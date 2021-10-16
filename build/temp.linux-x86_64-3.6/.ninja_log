@@ -1,0 +1,12 @@
+# ninja log v5
+31	5885	1634376355	/home/detectron2/build/temp.linux-x86_64-3.6/home/detectron2/detectron2/layers/csrc/cocoeval/cocoeval.o	14207dbd48daf16f
+5	6132	1634376356	/home/detectron2/build/temp.linux-x86_64-3.6/home/detectron2/detectron2/layers/csrc/box_iou_rotated/box_iou_rotated_cpu.o	24924f02040885bd
+39	7574	1634376357	/home/detectron2/build/temp.linux-x86_64-3.6/home/detectron2/detectron2/layers/csrc/nms_rotated/nms_rotated_cpu.o	ed9f4ec8315bd7d5
+9	11144	1634376361	/home/detectron2/build/temp.linux-x86_64-3.6/home/detectron2/detectron2/layers/csrc/ROIAlignRotated/ROIAlignRotated_cpu.o	a091721d94f9466c
+1	27598	1634376377	/home/detectron2/build/temp.linux-x86_64-3.6/home/detectron2/detectron2/layers/csrc/vision.o	8f7d61a576765394
+2	433	1634376873	/home/detectron2/build/temp.linux-x86_64-3.6/home/detectron2/detectron2/layers/csrc/cuda_version.o	d648dc03a873c574
+2	12472	1634376885	/home/detectron2/build/temp.linux-x86_64-3.6/home/detectron2/detectron2/layers/csrc/deformable/deform_conv_cuda_kernel.o	9bdde08130c36543
+2	12582	1634376885	/home/detectron2/build/temp.linux-x86_64-3.6/home/detectron2/detectron2/layers/csrc/nms_rotated/nms_rotated_cuda.o	1875fe300760f40d
+1	12641	1634376885	/home/detectron2/build/temp.linux-x86_64-3.6/home/detectron2/detectron2/layers/csrc/box_iou_rotated/box_iou_rotated_cuda.o	36efbfdefb91c19e
+1	12698	1634376885	/home/detectron2/build/temp.linux-x86_64-3.6/home/detectron2/detectron2/layers/csrc/ROIAlignRotated/ROIAlignRotated_cuda.o	44b740272aa897b8
+2	16963	1634376889	/home/detectron2/build/temp.linux-x86_64-3.6/home/detectron2/detectron2/layers/csrc/deformable/deform_conv_cuda.o	1546f468cd922d96

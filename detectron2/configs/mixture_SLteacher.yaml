@@ -1,0 +1,34 @@
+_BASE_: "/home/detectron2/configs/Base-RCNN-FPN.yaml"
+#configs setting:
+#https://blog.csdn.net/lanmengyiyu/article/details/82845366
+
+MODEL:
+  WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+  MASK_ON: True
+  RESNETS:
+    DEPTH: 50
+  ROI_HEADS:
+    NUM_CLASSES: 3
+    BATCH_SIZE_PER_IMAGE : 128
+
+SOLVER:
+  BASE_LR: 0.00025
+  MAX_ITER: 3000
+  IMS_PER_BATCH: 8
+  BASE_LR: 0.001
+  CHECKPOINT_PERIOD: 1000
+
+DATASETS:
+  ROOT: '/home/Datasets/ASL/train'
+  NAME: '0825msp_labeled'
+  TRAIN: ('train_0825msp_labeled',)
+  TEST: ('eval_0825msp_labeled',)
+
+TEST:
+  EVAL_PERIOD: 500
+
+DATALOADER:
+  NUM_WORKERS: 0
+
+# OUTPUT_DIR:
+#   "runs/1004ASL_men60/"

@@ -36,13 +36,13 @@ class labelme2coco(object):
             print(json_file)
             with open(json_file, "r") as fp:
                 data = json.load(fp)
-                self.images.append(self.image(data, num))
+                self.images.append(self.image(data, num+1))
                 for shapes in data["shapes"]:
                     label = shapes["label"].split("_")
                     if label not in self.label:
                         self.label.append(label)
                     points = shapes["points"]
-                    self.annotations.append(self.annotation(points, label, num))
+                    self.annotations.append(self.annotation(points, label, num+1))
                     self.annID += 1
 
         # Sort all text labels so they are in the same order across data splits.
@@ -60,7 +60,6 @@ class labelme2coco(object):
         image["height"] = height
         image["width"] = width
         image["id"] = num
-        # TODO: modify path
         image["file_name"] = data["imagePath"].split("\\")[-1]
         print(image["file_name"])
 
@@ -155,17 +154,9 @@ class labelme2coco(object):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="labelme annotation to coco data json file."
-    )
-    parser.add_argument(
-        "labelme_images",
-        help="Directory to labelme images and annotation json files.",
-        type=str,
-    )
-    parser.add_argument(
-        "--output", help="Output json file path.", default="trainval.json"
-    )
+    parser = argparse.ArgumentParser(description="labelme annotation to coco data json file.")
+    parser.add_argument("labelme_images",help="Directory to labelme images and annotation json files.",type=str)
+    parser.add_argument("--output", help="Output json file path.", default="trainval.json")
     args = parser.parse_args()
     labelme_json = glob.glob(os.path.join(args.labelme_images, "*.json"))
     labelme2coco(labelme_json, args.output)

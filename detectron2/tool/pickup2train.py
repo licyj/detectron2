@@ -101,21 +101,13 @@ def prepare_trainset(args, validVideo):
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("PICKUP_SRC",
-                        type=str,
-                        help="task name")
-    parser.add_argument("VALID_VIDEO_PATH",
-                        type=str,
-                        help="task name")
+    parser.add_argument("PICKUP_SRC", type=str, help="task name")
+    parser.add_argument("VALID_VIDEO_PATH", type=str, help="task name")
     # parser.add_argument("signer",
     #                     type=str,
     #                     help="task name")
-    parser.add_argument("TRAIN_PATH",
-                        type=str,
-                        help="json files within testset")
-    parser.add_argument("TRAIN_JSON_PATH",
-                        type=str,
-                        help="model name")
+    parser.add_argument("TRAIN_PATH", type=str, help="json files within testset")
+    parser.add_argument("TRAIN_JSON_PATH", type=str, help="model name")
     args = parser.parse_args()
     return args
 
